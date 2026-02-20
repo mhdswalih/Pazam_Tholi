@@ -1,13 +1,15 @@
 import { PrismaService } from "prisma/prisma.service";
 import { RegisterDto } from "./dto/register.dto";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from 'bcrypt'
 import { Mailservice } from "src/mail/mail.service";
 import { OtpService } from "./otp/otp.service";
+import { VerifyOtpDto } from "./dto/verifyOtp.dto";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService, private otpService:OtpService) { }
+    constructor(private prisma: PrismaService, private otpService: OtpService, private jwtService: JwtService) { }
 
     async register(dto: RegisterDto) {
         const existUser = await this.prisma.user.findUnique({
@@ -17,15 +19,91 @@ export class AuthService {
         if (existUser) {
             throw new BadRequestException("Email alredy exists")
         }
-        
-        
+
+        const hashedPassword = await bcrypt.hash(dto.password, 10)
+
+        await this.otpService.storeUserData(dto.email, {
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            email: dto.email,
+            password: hashedPassword
+        })
         const otp = await this.otpService.sendOtp(dto.email)
-      
+
         return {
             message: 'OTP send successfully',
-            email : dto.email,
+            email: dto.email,
             otp
-           
+
         }
+
     }
+    async verifyOtp(dto: VerifyOtpDto) {
+
+        const storedOtp = await this.otpService.storedOtp(dto.email);
+
+
+        // check OTP first
+        if (!storedOtp) {
+            throw new BadRequestException("OTP expired");
+        }
+
+        if (storedOtp !== dto.otp) {
+            throw new BadRequestException("Invalid OTP");
+        }
+
+        // now OTP is correct → get user data
+        const userData = await this.otpService.getUserData(dto.email);
+
+        if (!userData) {
+            throw new BadRequestException("User data expired");
+        }
+
+        // create user AFTER OTP verification
+        const user = await this.prisma.user.create({
+            data: userData
+        });
+
+        // cleanup Redis
+        await this.otpService.deleteOtp(dto.email);
+        await this.otpService.deleteUserData(dto.email);
+
+        const token = await this.generateToken(user);
+
+
+        return {
+            message: "User registered successfully",
+            user: user,
+            accessToken: token.accessToken,
+            refreshToken : token.refreshToken,
+
+        };
+
+    }
+    async refreshToken(refreshToken: string) {
+        const payLoad = await this.jwtService.verifyAsync(refreshToken, {
+            secret: process.env.JWT_REFRES_SECRET || "refreshSECRET"
+        })
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: payLoad.sub }
+        })
+        if (!user) {
+            throw new UnauthorizedException("User not found")
+        }
+
+        const token = await this.generateToken(user)
+        return token
+    }
+
+    async generateToken(user: any) {
+        const payload = {
+            sub: user.id,
+            email: user.email
+        };
+        const accessToken = await this.jwtService.signAsync(payload, { secret: process.env.JWT_ACCESS_SECRET || 'accesstokensecret', expiresIn: '15m' });
+        const refreshToken = await this.jwtService.signAsync(payload, { secret: process.env.JWT_REFRES_SECRET || 'refreshsecret', expiresIn: '7d' })
+        return { accessToken, refreshToken }
+    }
+
 }

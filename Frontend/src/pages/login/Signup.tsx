@@ -66,7 +66,7 @@ const SignUpPage: React.FC = () => {
       setIsLoading(true);
       try {
         const response = await registeUser(formData);
-        if (response.otp) {
+        if (response) {
           navigate('/otp',{state : {email : formData.email}}); 
         }
       } catch (error) {

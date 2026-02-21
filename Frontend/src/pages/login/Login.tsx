@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../../api/user/userApi';
+import { useDispatch } from 'react-redux';
+import { addUser } from '../../redux/user/userSlice';
 
 interface FormData {
   email: string;
@@ -17,7 +20,7 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-  
+  const dispatch = useDispatch()
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -42,22 +45,48 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    const newErrors = validateForm();
-    
-    if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-        alert('Login successful!');
-        setFormData({ email: '', password: '' });
-      }, 1500);
-    } else {
-      setErrors(newErrors);
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
+  e.preventDefault();
+
+  const newErrors = validateForm();
+
+  if (Object.keys(newErrors).length !== 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  try {
+
+    setIsLoading(true);
+
+    const response = await login(formData.email, formData.password);
+
+    if (!response || !response.accessToken) {
+      throw new Error("Login failed");
     }
-  };
+
+    dispatch(addUser({
+      id: response.user.id,
+      firstName: response.user.firstName,
+      lastName: response.user.lastName,
+      email: response.user.email,
+      token: response.accessToken,
+    }));
+
+    navigate("/");
+
+  } catch (error) {
+
+    console.error(error);
+    setErrors({ email: "Invalid email or password", password: "Invalid email or password" });
+
+  } finally {
+
+    setIsLoading(false);
+
+  }
+};
 
   const handleGoogleLogin = (): void => {
     setIsGoogleLoading(true);

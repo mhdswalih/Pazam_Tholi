@@ -1,9 +1,9 @@
-import React from 'react';
-import { Moon, Sun, LogIn, UserPlus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Moon, Sun, LogIn, Settings, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../redux/store';
-
+import UserEditModal from './modals/UserEditModal';
 
 interface NavbarProps {
     darkMode: boolean;
@@ -11,38 +11,73 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
-    const userName = useSelector((state:RootState) => state.auth.firstName)
+    const userName = useSelector((state: RootState) => state.auth.lastName);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Close mobile menu when window resizes to desktop
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handleSaveUserData = (data: any) => {
+        console.log('Saving user data:', data);
+        // Here you would dispatch an action to update user data in Redux
+        // For example: dispatch(updateUserProfile(data));
+    };
+
+    const toggleMobileMenu = () => {
+        setIsMobileMenuOpen(!isMobileMenuOpen);
+    };
+
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
+
     return (
         <div className='flex justify-center pt-5 px-4 relative z-20'>
             <div className={`${darkMode ? 'bg-gray-950' : 'bg-white/30 backdrop-blur-md'} w-full max-w-6xl rounded-2xl transition-colors duration-300 border ${darkMode ? 'border-gray-800' : 'border-amber-200/50'}`}>
-                <nav className={`flex rounded-2xl justify-between items-center px-8 py-4 shadow-lg ${darkMode
+                <nav className={`flex rounded-2xl justify-between items-center px-4 sm:px-6 lg:px-8 py-3 lg:py-4 shadow-lg ${darkMode
                         ? 'bg-gray-900/90 backdrop-blur-sm'
                         : 'bg-white/40 backdrop-blur-md'
                     }`}>
 
                     {/* Logo / Brand */}
-                    <div className="text-2xl flex rounded-lg font-bold">
+                    <div className="text-xl sm:text-2xl flex rounded-lg font-bold">
                         <p className={darkMode ? 'text-amber-400' : 'text-amber-600'}>Pazam</p>
                         <p className={`bg-gradient-to-r ${darkMode ? 'from-amber-400 to-yellow-500' : 'from-amber-600 to-yellow-600'} bg-clip-text text-transparent`}>_Tholi</p>
                     </div>
 
-                    {/* Navigation Links */}
-                    <ul className="flex gap-8 text-base font-medium">
-                        <li className={`cursor-pointer transition-all duration-300 ${
-                            darkMode 
-                                ? 'text-gray-300 hover:text-amber-400' 
-                                : 'text-amber-800 hover:text-amber-600'
-                        }`}>
+                    {/* Desktop Navigation Links - Hidden on mobile */}
+                    <ul className="hidden lg:flex gap-6 xl:gap-8 text-base font-medium">
+                        <a 
+                            href='/' 
+                            className={`cursor-pointer transition-all duration-300 ${
+                                darkMode 
+                                    ? 'text-gray-300 hover:text-amber-400' 
+                                    : 'text-amber-800 hover:text-amber-600'
+                            }`}
+                        >
                             Home
-                        </li>
-                        <li className={`cursor-pointer transition-all duration-300 ${
-                            darkMode 
-                                ? 'text-gray-300 hover:text-amber-400' 
-                                : 'text-amber-800 hover:text-amber-600'
-                        }`}>
+                        </a>
+                        <a 
+                            href='/feed'  
+                            className={`cursor-pointer transition-all duration-300 ${
+                                darkMode 
+                                    ? 'text-gray-300 hover:text-amber-400' 
+                                    : 'text-amber-800 hover:text-amber-600'
+                            }`}
+                        >
                             Posts
-                        </li>
-                        <li className={`cursor-pointer transition-all duration-300 ${
+                        </a>
+                        <li className={`cursor-pointer transition-all duration-300 list-none ${
                             darkMode 
                                 ? 'text-gray-300 hover:text-amber-400' 
                                 : 'text-amber-800 hover:text-amber-600'
@@ -52,45 +87,150 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
                     </ul>
 
                     {/* Right Side - Theme Toggle & Auth Buttons */}
-                    <div className="flex items-center gap-4">
-
+                    <div className="flex items-center gap-2 sm:gap-4">
                         {/* Theme Toggle */}
                         <button
                             onClick={() => setDarkMode(!darkMode)}
-                            className={`p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${
+                            className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${
                                 darkMode
                                     ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
                                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                             }`}
+                            aria-label="Toggle theme"
                         >
-                            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                            {darkMode ? <Sun size={18} className="sm:w-5 sm:h-5" /> : <Moon size={18} className="sm:w-5 sm:h-5" />}
                         </button>
-
-                        {/* Sign In Button */}
-                        <Link 
-                            to={'/login'} 
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-300 border ${
-                                darkMode
-                                    ? 'border-amber-400 text-amber-300 hover:bg-amber-500/10 hover:border-amber-300'
-                                    : 'border-amber-400 text-amber-700 hover:bg-amber-50 hover:border-amber-500'
-                            }`}
-                        >
-                            <LogIn size={18} />
-                            Sign In
-                        </Link>
-
-                        {/* Sign Up Button */}
-                        <Link 
-                            to={'/signup'} 
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50"
-                        >
-                            <UserPlus size={18} />
-                            Sign Up
-                        </Link>
                         
+                        {!userName ? (
+                            <Link 
+                                to={'/login'} 
+                                className={`hidden sm:flex items-center gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg font-medium transition-all duration-300 border ${
+                                    darkMode
+                                        ? 'border-amber-400 text-amber-300 hover:bg-amber-500/10 hover:border-amber-300'
+                                        : 'border-amber-400 text-amber-700 hover:bg-amber-50 hover:border-amber-500'
+                                }`}
+                            >
+                                <LogIn size={16} className="sm:w-[18px] sm:h-[18px]" />
+                                <span className="hidden sm:inline">Sign In</span>
+                            </Link>
+                        ) : (
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className={`hidden sm:flex p-2 sm:p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${
+                                    darkMode
+                                        ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
+                                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                }`}
+                                aria-label="Settings"
+                            >
+                                <Settings size={18} className="sm:w-5 sm:h-5" />
+                            </button>
+                        )}
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={toggleMobileMenu}
+                            className={`lg:hidden p-2 rounded-lg transition-all duration-300 ${
+                                darkMode
+                                    ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
+                                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            }`}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                        </button>
                     </div>
                 </nav>
+
+                {/* Mobile Menu Dropdown */}
+                {isMobileMenuOpen && (
+                    <div className={`lg:hidden rounded-b-2xl px-4 py-4 border-t ${
+                        darkMode 
+                            ? 'bg-gray-900/95 border-gray-800' 
+                            : 'bg-white/95 backdrop-blur-md border-amber-200/50'
+                    }`}>
+                        <div className="flex flex-col space-y-3">
+                            {/* Mobile Navigation Links */}
+                            <a 
+                                href='/' 
+                                onClick={closeMobileMenu}
+                                className={`px-4 py-3 rounded-xl transition-all duration-300 ${
+                                    darkMode 
+                                        ? 'text-gray-300 hover:bg-gray-800 hover:text-amber-400' 
+                                        : 'text-amber-800 hover:bg-amber-100 hover:text-amber-600'
+                                }`}
+                            >
+                                Home
+                            </a>
+                            <a 
+                                href='/feed'  
+                                onClick={closeMobileMenu}
+                                className={`px-4 py-3 rounded-xl transition-all duration-300 ${
+                                    darkMode 
+                                        ? 'text-gray-300 hover:bg-gray-800 hover:text-amber-400' 
+                                        : 'text-amber-800 hover:bg-amber-100 hover:text-amber-600'
+                                }`}
+                            >
+                                Posts
+                            </a>
+                            <li className={`px-4 py-3 rounded-xl transition-all duration-300 list-none ${
+                                darkMode 
+                                    ? 'text-gray-300 hover:bg-gray-800 hover:text-amber-400' 
+                                    : 'text-amber-800 hover:bg-amber-100 hover:text-amber-600'
+                            }`}>
+                                Chat
+                            </li>
+
+                            {/* Mobile Auth Buttons */}
+                            <div className="border-t pt-3 mt-2 border-amber-200/30">
+                                {!userName ? (
+                                    <Link 
+                                        to={'/login'} 
+                                        onClick={closeMobileMenu}
+                                        className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 border ${
+                                            darkMode
+                                                ? 'border-amber-400 text-amber-300 hover:bg-amber-500/10'
+                                                : 'border-amber-400 text-amber-700 hover:bg-amber-50'
+                                        }`}
+                                    >
+                                        <LogIn size={18} />
+                                        Sign In
+                                    </Link>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            setIsEditModalOpen(true);
+                                            closeMobileMenu();
+                                        }}
+                                        className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+                                            darkMode
+                                                ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
+                                                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                        }`}
+                                    >
+                                        <Settings size={18} />
+                                        Edit Profile
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
+            
+            {/* User Edit Modal */}
+            <UserEditModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                darkMode={darkMode}
+                userData={{
+                    firstName: 'John',
+                    lastName: userName || 'Doe',
+                    email: 'user@example.com',
+                    profilePic: ''
+                }}
+                onSave={handleSaveUserData}
+            />
         </div>
     );
 };

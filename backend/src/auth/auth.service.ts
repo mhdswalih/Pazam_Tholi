@@ -6,6 +6,7 @@ import { Mailservice } from "src/mail/mail.service";
 import { OtpService } from "./otp/otp.service";
 import { VerifyOtpDto } from "./dto/verifyOtp.dto";
 import { JwtService } from "@nestjs/jwt";
+import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,8 @@ export class AuthService {
         const existUser = await this.prisma.user.findUnique({
             where: { email: dto.email }
         })
-
+            console.log(existUser);
+            
         if (existUser) {
             throw new BadRequestException("Email alredy exists")
         }
@@ -29,7 +31,8 @@ export class AuthService {
             password: hashedPassword
         })
         const otp = await this.otpService.sendOtp(dto.email)
-
+            console.log(otp);
+            
         return {
             message: 'OTP send successfully',
             email: dto.email,
@@ -75,7 +78,7 @@ export class AuthService {
             message: "User registered successfully",
             user: user,
             accessToken: token.accessToken,
-            refreshToken : token.refreshToken,
+            refreshToken: token.refreshToken,
 
         };
 
@@ -94,6 +97,35 @@ export class AuthService {
 
         const token = await this.generateToken(user)
         return token
+    }
+    async login(dto: LoginDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email }
+        })
+
+        if (!user) {
+            throw new UnauthorizedException("invalid email or Password")
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+            dto.password,
+            user.password
+        )
+        if (!isPasswordValid) {
+            throw new UnauthorizedException("Invalid password or email")
+        }
+        const token = await this.generateToken(user)
+
+        return {
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+            },
+            accessToken: token.accessToken,
+            refreshToken: token.refreshToken,
+        };
     }
 
     async generateToken(user: any) {

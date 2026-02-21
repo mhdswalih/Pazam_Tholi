@@ -323,30 +323,11 @@ const PostCard: React.FC<{ post: Post; darkMode: boolean; onUpdate: (post: Post)
   );
 };
 
-// ── Loading Skeleton ─────────────────────────────────────────
-const PostSkeleton: React.FC<{ darkMode: boolean }> = ({ darkMode }) => (
-  <div className={`rounded-2xl border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white/80 backdrop-blur-sm border-amber-100'} p-4 mb-6 animate-pulse`}>
-    <div className="flex items-center gap-3 mb-4">
-      <div className={`w-9 h-9 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-amber-200'}`}></div>
-      <div className="flex-1">
-        <div className={`h-4 w-24 ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded mb-2`}></div>
-        <div className={`h-3 w-16 ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded`}></div>
-      </div>
-    </div>
-    <div className={`w-full h-96 ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded-lg mb-4`}></div>
-    <div className={`h-4 w-full ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded mb-2`}></div>
-    <div className={`h-4 w-2/3 ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded mb-2`}></div>
-    <div className={`h-4 w-1/2 ${darkMode ? 'bg-gray-700' : 'bg-amber-200'} rounded`}></div>
-  </div>
-);
-
 // ── Main Feed ─────────────────────────────────────────────────
 const PostFeed: React.FC<PostFeedProps> = ({ darkMode, setDarkMode }) => {
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(false);
   
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
@@ -367,7 +348,6 @@ const PostFeed: React.FC<PostFeedProps> = ({ darkMode, setDarkMode }) => {
       setHasMore(false);
     } else {
       setPosts(prev => [...prev, ...newPosts]);
-      setPage(prev => prev + 1);
     }
     
     setLoading(false);
@@ -449,29 +429,18 @@ const PostFeed: React.FC<PostFeedProps> = ({ darkMode, setDarkMode }) => {
           <div className={`border-t ${divider} mb-6`} />
 
           {/* Posts */}
-          {initialLoading ? (
-            // Show skeletons while loading
-            <>
-              <PostSkeleton darkMode={darkMode} />
-              <PostSkeleton darkMode={darkMode} />
-              <PostSkeleton darkMode={darkMode} />
-            </>
-          ) : (
-            <>
-              {posts.map((post, index) => {
-                // Add ref to the last post for intersection observer
-                if (index === posts.length - 1) {
-                  return (
-                    <div ref={lastPostRef} key={post.id}>
-                      <PostCard post={post} darkMode={darkMode} onUpdate={updatePost} />
-                    </div>
-                  );
-                } else {
-                  return <PostCard key={post.id} post={post} darkMode={darkMode} onUpdate={updatePost} />;
-                }
-              })}
-            </>
-          )}
+          {posts.map((post, index) => {
+            // Add ref to the last post for intersection observer
+            if (index === posts.length - 1) {
+              return (
+                <div ref={lastPostRef} key={post.id}>
+                  <PostCard post={post} darkMode={darkMode} onUpdate={updatePost} />
+                </div>
+              );
+            } else {
+              return <PostCard key={post.id} post={post} darkMode={darkMode} onUpdate={updatePost} />;
+            }
+          })}
 
           {/* Loading indicator */}
           {loading && (

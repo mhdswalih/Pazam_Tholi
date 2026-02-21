@@ -18,7 +18,6 @@ const OtpPage: React.FC = () => {
 
   // Get data from location state
   const email = location.state?.email;
-  const userData = location.state?.formData || location.state?.FormData;
 
 
 

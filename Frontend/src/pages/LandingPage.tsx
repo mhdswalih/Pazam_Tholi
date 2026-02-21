@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
 import MainImage from '../assets/img/ChatGPT Image Feb 16, 2026, 08_42_25 PM.png'

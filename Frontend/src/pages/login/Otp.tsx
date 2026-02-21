@@ -190,6 +190,7 @@ const OtpPage: React.FC = () => {
           firstName : response.user?.firstName || "",
           lastName : response.user?.lastName || "",
           email : response.user?.email || "",
+          profilePic : response?.profilePic || "",
           token : response.accessToken || ""
         }))
           navigate('/');

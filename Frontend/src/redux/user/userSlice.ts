@@ -5,6 +5,7 @@ interface UserState {
   firstName: string;
   lastName: string;
   email: string;
+  profilePic : string
   token: string;
 }
 
@@ -13,6 +14,7 @@ const initialState: UserState = {
   firstName: "",
   lastName: "",
   email: "",
+  profilePic : "",
   token: "",
 };
 
@@ -28,6 +30,7 @@ const loginUser = createSlice({
       state.firstName = action.payload.firstName;
       state.lastName = action.payload.lastName;
       state.email = action.payload.email;
+      state.profilePic = action.payload.profilePic;
       state.token = action.payload.token;
     },
     removeUser: () => {

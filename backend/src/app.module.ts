@@ -5,13 +5,15 @@ import { AuthModule } from './auth/auth.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { MailModule } from './mail/mail.module';
 import { OtpModule } from './auth/otp/otp.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
     MailModule,
     OtpModule,
     RedisModule,
-    AuthModule
+    AuthModule,
+    ProfileModule
   ],
   controllers: [AppController],
   providers: [AppService],

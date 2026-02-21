@@ -11,6 +11,8 @@ model User {
   firstName String
   lastName  String
   email     String   @unique
+  profilePic  String?
   password  String
   createdAt DateTime @default(now())
 }
+

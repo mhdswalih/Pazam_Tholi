@@ -2,7 +2,6 @@ import { PrismaService } from "prisma/prisma.service";
 import { RegisterDto } from "./dto/register.dto";
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from 'bcrypt'
-import { Mailservice } from "src/mail/mail.service";
 import { OtpService } from "./otp/otp.service";
 import { VerifyOtpDto } from "./dto/verifyOtp.dto";
 import { JwtService } from "@nestjs/jwt";

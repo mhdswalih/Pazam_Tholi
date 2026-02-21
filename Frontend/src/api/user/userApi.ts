@@ -41,3 +41,15 @@ export const login = async(email:string,password:string) => {
         
     }
 }
+
+export const editProfile = async(userData : any) => { 
+    try {
+        const response =await Axios.patch('/profile/edit-profile', userData)
+        console.log(response.data,'THIS IS FROM API SIDE');
+        return response.data
+    } catch (error) {
+        console.log(error);
+        
+        
+    }
+}

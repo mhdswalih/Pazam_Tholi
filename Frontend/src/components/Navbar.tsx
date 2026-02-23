@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, LogIn, Settings, Menu, X } from 'lucide-react';
+import { Moon, Sun, LogIn, Settings, Menu, X, PowerOff, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../redux/store';
 import UserEditModal from './modals/UserEditModal';
 import { editProfile } from '../api/user/userApi';
+import { addUser, removeUser } from '../redux/user/userSlice';
 
 interface NavbarProps {
     darkMode: boolean;
@@ -13,8 +14,6 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
     const user = useSelector((state: RootState) => state.auth);
-    console.log(user.id ,"THIS IS USER ID");
-    
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const dispatch = useDispatch();
@@ -24,7 +23,7 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
         const userId = user?.id || "guest";
         const themeKey = `theme_${userId}`;
         const savedTheme = localStorage.getItem(themeKey);
-        
+
         if (savedTheme) {
             const isDark = savedTheme === "dark";
             // Only update if different from current
@@ -55,14 +54,22 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleSaveUserData = async (data: any) => {
+    const handleSaveUserData = async (data: any, imageFile?: File | null) => {
         try {
-            const response = await editProfile(data)
-            console.log(response, 'THIS IS FROM BACKEND');
-            // if(response){
-            //     dispatch({
-            //     })
-            // }
+           
+                const response = await editProfile(user.id, data, imageFile || undefined);
+                if (response) {
+                    dispatch(addUser({
+                        id: response.id,
+                        firstName: response.firstName,
+                        lastName: response.lastName,
+                        email: response.email,
+                        profilePic: response.profilePic,
+                        token: user.token
+                    }));
+                }
+          
+              
         } catch (error) {
             console.error('Error saving user data:', error);
         }
@@ -75,15 +82,17 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
     const closeMobileMenu = () => {
         setIsMobileMenuOpen(false);
     };
-
+    const handleLogout = async() => {
+        dispatch(removeUser())
+    }
     const handleThemeToggle = () => {
         const newMode = !darkMode;
         setDarkMode(newMode);
-        
+
         const userId = user?.id || "guest";
         const themeKey = `theme_${userId}`;
         const themeValue = newMode ? "dark" : "light";
-        
+
         localStorage.setItem(themeKey, themeValue);
         console.log("Saved theme:", themeKey, themeValue);
     };
@@ -143,7 +152,16 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
                         >
                             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
-
+                                    <button
+                            onClick={handleLogout}
+                            className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${darkMode
+                                ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
+                                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                }`}
+                            aria-label="Toggle theme"
+                        >
+                            <LogOut size={18} />
+                        </button>
                         {!user ? (
                             <Link
                                 to={'/login'}

@@ -1,3 +1,4 @@
+// components/modals/UserEditModal.tsx
 import React, { useState, useRef } from 'react';
 import { X, User, Camera, Upload, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,36 +8,38 @@ interface IUserData {
     firstName: string;
     lastName: string;
     email: string;
-    profilePic : string;
+    profilePic: string;
     token: string;
 }
+
 interface UserEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     darkMode?: boolean;
-    userData : IUserData;
-    onSave?: (data: any) => void;
+    userData: IUserData;
+    onSave?: (userData: IUserData, imageFile?: File | null) => void; 
 }
 
 const UserEditModal: React.FC<UserEditModalProps> = ({
     isOpen,
     onClose,
     darkMode = false,
-    userData = {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        profilePic: ''
-    },
+    userData,
     onSave
 }) => {
+    // User data as strings (all fields remain strings)
     const [formData, setFormData] = useState({
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        profilePic: userData.profilePic || ''
+        firstName: userData?.firstName || '',
+        lastName: userData?.lastName || '',
+        email: userData?.email || '',
+        id: userData?.id || '',
+        token: userData?.token || '',
+        profilePic: userData?.profilePic || '' // This stays as string (URL/path)
     });
-    const [previewImage, setPreviewImage] = useState<string | null>(userData.profilePic || null);
+    
+    // Separate state for the image file
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(userData?.profilePic || null);
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
 
@@ -72,10 +75,15 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Store the file separately
+            setImageFile(file);
+            
+            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewImage(reader.result as string);
-                setFormData(prev => ({ ...prev, profilePic: reader.result as string }));
+                // DON'T update formData.profilePic with base64
+                // Keep it as empty or original string
             };
             reader.readAsDataURL(file);
         }
@@ -83,6 +91,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
 
     const handleRemoveImage = () => {
         setPreviewImage(null);
+        setImageFile(null);
         setFormData(prev => ({ ...prev, profilePic: '' }));
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -102,11 +111,23 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
 
         if (Object.keys(newErrors).length === 0) {
             setIsLoading(true);
+            
+            // Prepare user data (all fields are strings)
+            const userDataToSave: IUserData = {
+                id: formData.id,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                profilePic: formData.profilePic, // This remains the original URL/path
+                token: formData.token
+            };
+            
             // Simulate API call
             setTimeout(() => {
                 setIsLoading(false);
                 if (onSave) {
-                    onSave(formData);
+                    // Pass user data (strings) and image file separately
+                    onSave(userDataToSave, imageFile);
                 }
                 onClose();
             }, 1500);
@@ -139,29 +160,34 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                         exit="exit"
                         className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4"
                     >
-                        <div className={`rounded-2xl shadow-2xl overflow-hidden ${darkMode
+                        <div className={`rounded-2xl shadow-2xl overflow-hidden ${
+                            darkMode
                                 ? 'bg-gray-900 border border-gray-800'
                                 : 'bg-white/95 backdrop-blur-sm border border-amber-200'
-                            }`}>
+                        }`}>
                             {/* Header */}
-                            <div className={`flex justify-between items-center p-6 border-b ${darkMode ? 'border-gray-800' : 'border-amber-200'
-                                }`}>
+                            <div className={`flex justify-between items-center p-6 border-b ${
+                                darkMode ? 'border-gray-800' : 'border-amber-200'
+                            }`}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${darkMode ? 'bg-amber-500/20' : 'bg-amber-100'
-                                        }`}>
+                                    <div className={`p-2 rounded-lg ${
+                                        darkMode ? 'bg-amber-500/20' : 'bg-amber-100'
+                                    }`}>
                                         <User size={20} className={darkMode ? 'text-amber-400' : 'text-amber-700'} />
                                     </div>
-                                    <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-amber-900'
-                                        }`}>
+                                    <h3 className={`text-xl font-bold ${
+                                        darkMode ? 'text-white' : 'text-amber-900'
+                                    }`}>
                                         Edit Profile
                                     </h3>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className={`p-2 rounded-lg transition-colors ${darkMode
+                                    className={`p-2 rounded-lg transition-colors ${
+                                        darkMode
                                             ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
                                             : 'hover:bg-amber-100 text-amber-600 hover:text-amber-800'
-                                        }`}
+                                    }`}
                                 >
                                     <X size={20} />
                                 </button>
@@ -172,10 +198,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                 {/* Profile Picture */}
                                 <div className="flex flex-col items-center">
                                     <div className="relative mb-3">
-                                        <div className={`w-24 h-24 rounded-full overflow-hidden border-4 ${darkMode
+                                        <div className={`w-24 h-24 rounded-full overflow-hidden border-4 ${
+                                            darkMode
                                                 ? 'border-gray-700 bg-gray-800'
                                                 : 'border-amber-200 bg-amber-50'
-                                            }`}>
+                                        }`}>
                                             {previewImage ? (
                                                 <img
                                                     src={previewImage}
@@ -191,10 +218,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            className={`absolute bottom-0 right-0 p-2 rounded-full shadow-lg transition-all hover:scale-110 ${darkMode
+                                            className={`absolute bottom-0 right-0 p-2 rounded-full shadow-lg transition-all hover:scale-110 ${
+                                                darkMode
                                                     ? 'bg-amber-500 text-white hover:bg-amber-600'
                                                     : 'bg-amber-600 text-white hover:bg-amber-700'
-                                                }`}
+                                            }`}
                                         >
                                             <Camera size={16} />
                                         </button>
@@ -208,14 +236,24 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                         className="hidden"
                                     />
 
+                                    {/* Show file name if selected */}
+                                    {imageFile && (
+                                        <p className={`text-xs mt-1 ${
+                                            darkMode ? 'text-gray-400' : 'text-amber-600'
+                                        }`}>
+                                            Selected: {imageFile.name}
+                                        </p>
+                                    )}
+
                                     {previewImage && (
                                         <button
                                             type="button"
                                             onClick={handleRemoveImage}
-                                            className={`text-sm flex items-center gap-1 mt-2 ${darkMode
+                                            className={`text-sm flex items-center gap-1 mt-2 ${
+                                                darkMode
                                                     ? 'text-red-400 hover:text-red-300'
                                                     : 'text-red-600 hover:text-red-700'
-                                                }`}
+                                            }`}
                                         >
                                             <Upload size={14} className="rotate-180" />
                                             Remove Photo
@@ -225,8 +263,9 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
 
                                 {/* First Name */}
                                 <div>
-                                    <label htmlFor="firstName" className={`block text-sm font-semibold mb-1 ${darkMode ? 'text-gray-300' : 'text-amber-900'
-                                        }`}>
+                                    <label htmlFor="firstName" className={`block text-sm font-semibold mb-1 ${
+                                        darkMode ? 'text-gray-300' : 'text-amber-900'
+                                    }`}>
                                         First Name
                                     </label>
                                     <input
@@ -236,12 +275,13 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                         value={formData.firstName}
                                         onChange={handleChange}
                                         placeholder="Enter first name"
-                                        className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all ${errors.firstName
+                                        className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all ${
+                                            errors.firstName
                                                 ? 'border-red-500 focus:ring-red-500'
                                                 : darkMode
                                                     ? 'border-gray-700 bg-gray-800 text-white focus:ring-amber-500 focus:border-transparent'
                                                     : 'border-amber-200 bg-white/80 text-gray-800 focus:ring-amber-500 focus:border-transparent'
-                                            }`}
+                                        }`}
                                     />
                                     {errors.firstName && (
                                         <p className="text-red-500 text-xs mt-1 font-medium">{errors.firstName}</p>
@@ -250,8 +290,9 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
 
                                 {/* Last Name */}
                                 <div>
-                                    <label htmlFor="lastName" className={`block text-sm font-semibold mb-1 ${darkMode ? 'text-gray-300' : 'text-amber-900'
-                                        }`}>
+                                    <label htmlFor="lastName" className={`block text-sm font-semibold mb-1 ${
+                                        darkMode ? 'text-gray-300' : 'text-amber-900'
+                                    }`}>
                                         Last Name
                                     </label>
                                     <input
@@ -261,12 +302,13 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                         value={formData.lastName}
                                         onChange={handleChange}
                                         placeholder="Enter last name"
-                                        className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all ${errors.lastName
+                                        className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all ${
+                                            errors.lastName
                                                 ? 'border-red-500 focus:ring-red-500'
                                                 : darkMode
                                                     ? 'border-gray-700 bg-gray-800 text-white focus:ring-amber-500 focus:border-transparent'
                                                     : 'border-amber-200 bg-white/80 text-gray-800 focus:ring-amber-500 focus:border-transparent'
-                                            }`}
+                                        }`}
                                     />
                                     {errors.lastName && (
                                         <p className="text-red-500 text-xs mt-1 font-medium">{errors.lastName}</p>
@@ -275,8 +317,9 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
 
                                 {/* Email (Read-only) */}
                                 <div>
-                                    <label htmlFor="email" className={`block text-sm font-semibold mb-1 ${darkMode ? 'text-gray-300' : 'text-amber-900'
-                                        }`}>
+                                    <label htmlFor="email" className={`block text-sm font-semibold mb-1 ${
+                                        darkMode ? 'text-gray-300' : 'text-amber-900'
+                                    }`}>
                                         Email
                                     </label>
                                     <input
@@ -284,10 +327,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                         type="email"
                                         value={formData.email}
                                         disabled
-                                        className={`w-full px-4 py-3 rounded-xl border opacity-75 cursor-not-allowed ${darkMode
+                                        className={`w-full px-4 py-3 rounded-xl border opacity-75 cursor-not-allowed ${
+                                            darkMode
                                                 ? 'border-gray-700 bg-gray-900 text-gray-400'
                                                 : 'border-amber-200 bg-amber-50/50 text-gray-500'
-                                            }`}
+                                        }`}
                                     />
                                 </div>
 
@@ -296,10 +340,11 @@ const UserEditModal: React.FC<UserEditModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${darkMode
+                                        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                                            darkMode
                                                 ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                                                 : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                                            }`}
+                                        }`}
                                     >
                                         Cancel
                                     </button>

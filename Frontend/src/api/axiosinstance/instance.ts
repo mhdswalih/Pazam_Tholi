@@ -6,7 +6,7 @@ import { addUser, removeUser } from "../../redux/user/userSlice";
 export const Axios = axios.create({
   baseURL: import.meta.env.VITE_BASE_URI,
   withCredentials: true,
-  headers: { "Content-Type": "application/json" },
+ 
 });
 
 
@@ -80,6 +80,7 @@ Axios.interceptors.response.use(
             email: currentUser.email,
             firstName: currentUser.firstName,
             lastName: currentUser.lastName,
+            profilePic : currentUser.profilePic,
             token: newAccessToken,
           })
         );

@@ -1,27 +1,29 @@
-import { BadGatewayException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "prisma/prisma.service";
 import { EditProfileDto } from "./dto/editProfile.dto";
 
 @Injectable()
 export class ProfileService {
-    constructor(private prisma : PrismaService) {}
+    constructor(private prisma: PrismaService) {}
 
-async updateProfile(dto:EditProfileDto) {
-    const existUser = await this.prisma.user.findUnique({
-        where : {email : dto.email}
-    })
-    
-    
-    if(!existUser){
-        throw new BadGatewayException("Invalid User")
-    }
+   async updateProfile(userId: string, dto: EditProfileDto) {
 
-    const updaredUser = this.prisma.user.update({
-        where : {email : dto.email},
-        data : {
-           ...dto 
-        }
-    })
-    return updaredUser
+    const updateData: any = {};
+
+    if (dto.firstName !== undefined)
+        updateData.firstName = dto.firstName;
+
+    if (dto.lastName !== undefined)
+        updateData.lastName = dto.lastName;
+
+    if (dto.profilePic !== undefined)
+        updateData.profilePic = dto.profilePic;
+
+    console.log(updateData, "UPDATE DATA");
+
+    return this.prisma.user.update({
+        where: { id: userId }, // use userId, NOT email
+        data: updateData,
+    });
 }
 }

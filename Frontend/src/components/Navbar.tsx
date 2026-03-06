@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, LogIn, Settings, Menu, X, PowerOff, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../redux/store';
-import UserEditModal from './modals/UserEditModal';
-import { editProfile } from '../api/user/userApi';
-import { addUser, removeUser } from '../redux/user/userSlice';
+
+import {  removeUser } from '../redux/user/userSlice';
 
 interface NavbarProps {
     darkMode: boolean;
@@ -14,10 +13,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
     const user = useSelector((state: RootState) => state.auth);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+   
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const dispatch = useDispatch();
-
+    const navigate = useNavigate()
     // Load theme from localStorage on component mount
     useEffect(() => {
         const userId = user?.id || "guest";
@@ -54,26 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleSaveUserData = async (data: any, imageFile?: File | null) => {
-        try {
-           
-                const response = await editProfile(user.id, data, imageFile || undefined);
-                if (response) {
-                    dispatch(addUser({
-                        id: response.id,
-                        firstName: response.firstName,
-                        lastName: response.lastName,
-                        email: response.email,
-                        profilePic: response.profilePic,
-                        token: user.token
-                    }));
-                }
-          
-              
-        } catch (error) {
-            console.error('Error saving user data:', error);
-        }
-    };
+  
 
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -175,7 +155,7 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
                             </Link>
                         ) : (
                             <button
-                                onClick={() => setIsEditModalOpen(true)}
+                                onClick={() => navigate('/profile') }
                                 className={`hidden sm:flex p-2 sm:p-2.5 rounded-lg transition-all duration-300 hover:scale-110 ${darkMode
                                     ? 'bg-gray-800 text-amber-400 hover:bg-gray-700'
                                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -252,7 +232,6 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
                                 ) : (
                                     <button
                                         onClick={() => {
-                                            setIsEditModalOpen(true);
                                             closeMobileMenu();
                                         }}
                                         className={`flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-medium transition-all duration-300 ${darkMode
@@ -270,14 +249,7 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, setDarkMode }) => {
                 )}
             </div>
 
-            {/* User Edit Modal */}
-            <UserEditModal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                darkMode={darkMode}
-                userData={user}
-                onSave={handleSaveUserData}
-            />
+         
         </div>
     );
 };

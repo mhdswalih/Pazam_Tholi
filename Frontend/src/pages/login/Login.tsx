@@ -65,12 +65,14 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     if (!response || !response.accessToken) {
       throw new Error("Login failed");
     }
-
+    console.log(response,'THIS IS RESPONSE FROM BACEFNASJFDK');
+    
     dispatch(addUser({
       id: response.user.id,
       firstName: response.user.firstName,
       lastName: response.user.lastName,
       email: response.user.email,
+      profilePic : response.user.profilePic,
       token: response.accessToken,
     }));
 

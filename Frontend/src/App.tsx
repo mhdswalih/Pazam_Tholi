@@ -5,6 +5,7 @@ import SignUpPage from "./pages/login/Signup";
 import LoginPage from "./pages/login/Login";
 import OtpPage from "./pages/login/Otp";
 import PostFeed from "./pages/feed/Feed";
+import ProfilePage from "./pages/profile/Profile";
 
 const App = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -17,6 +18,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/otp" element={<OtpPage />} /> 
         <Route path="/feed" element={<PostFeed darkMode={darkMode} setDarkMode={setDarkMode} />} />
+        <Route path="/profile" element={<ProfilePage darkMode={darkMode} setDarkMode={setDarkMode} />} />
       </Routes>
     </BrowserRouter>
   );

@@ -15,7 +15,7 @@ export class AuthService {
         const existUser = await this.prisma.user.findUnique({
             where: { email: dto.email }
         })
-            console.log(existUser);
+          
             
         if (existUser) {
             throw new BadRequestException("Email alredy exists")
